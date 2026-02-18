@@ -3,182 +3,127 @@ import pandas as pd
 import datetime
 
 # ==============================================================================
-# 1. CONFIGURATION DU "COCKPIT"
+# 1. CONFIGURATION STRICTE
 # ==============================================================================
 st.set_page_config(
-    page_title="Lease Valuation | ComptaxSolutions",
+    page_title="ComptaxSolutions | Lease Valuation",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# 2. DESIGN SYSTEM "TIER-1 CONSULTING" (CSS)
+# 2. DESIGN SYSTEM "GOLDMAN SACHS STYLE"
 # ==============================================================================
 st.markdown("""
     <style>
-    /* IMPORTS FONTS LUXE */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+    /* IMPORTS FONTS */
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
     :root {
-        --primary: #1e293b;   /* Slate 800 - Le "Noir" Corporate */
-        --gold: #b4975a;      /* Or brossé - Luxe discret */
-        --paper: #ffffff;     /* Blanc pur */
-        --bg: #f1f5f9;        /* Gris très léger pour le fond */
-        --subtle: #64748b;    /* Gris texte secondaire */
+        --bg-app: #e0e5ec;        /* Gris perle pour le fond d'écran */
+        --paper: #ffffff;         /* Blanc pur pour la feuille */
+        --ink: #1a1a1a;           /* Noir encre */
+        --gold: #a38f60;          /* Or vieilli (Luxe) */
+        --subtle: #666666;        /* Gris moyen */
+        --border: #dcdcdc;
     }
 
-    /* --- CORRECTION DU "GROS ENCADRÉ VIDE" --- */
-    /* On supprime les marges par défaut de Streamlit */
+    /* NETTOYAGE COMPLET DE L'INTERFACE STREAMLIT */
+    .stApp { background-color: var(--bg-app); font-family: 'Lato', sans-serif; }
+    header { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+    footer { visibility: hidden; }
+    
+    /* SUPPRESSION DES MARGES PARASITES */
     .block-container {
-        padding-top: 2rem !important; /* Juste un petit espace pour respirer */
-        padding-bottom: 0rem !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-    }
-    
-    /* On cache le Header par défaut de Streamlit qui prend de la place */
-    header[data-testid="stHeader"] {
-        display: none;
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
-    /* STRUCTURE GÉNÉRALE */
-    .stApp {
-        background-color: var(--bg);
-        font-family: 'Inter', sans-serif;
-    }
-    
-    #MainMenu, footer {visibility: hidden;}
-
-    /* LA FEUILLE A4 (CONTAINER PRINCIPAL) */
-    .report-sheet {
+    /* LA FEUILLE A4 - LE COEUR DU DESIGN */
+    .a4-sheet {
         background-color: var(--paper);
-        max-width: 21cm; /* Largeur A4 */
-        margin: 0 auto; /* Centré */
-        padding: 50px 60px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
-        border-top: 5px solid var(--primary);
-        min-height: 25cm;
+        width: 21cm;
+        min-height: 29.7cm;
+        margin: 0 auto;
+        padding: 2cm;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        position: relative;
     }
 
-    /* TYPOGRAPHIE */
-    h1, h2, h3 {
-        font-family: 'Playfair Display', serif;
-        color: var(--primary);
-    }
-    
-    .report-title {
-        font-size: 26px;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        margin-bottom: 5px;
-        color: var(--primary);
-    }
-    
-    .report-subtitle {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: var(--gold);
-        font-weight: 600;
-        margin-bottom: 10px;
-    }
+    /* TYPOGRAPHIE INTERNE */
+    h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--ink); margin-bottom: 5px; border-bottom: none; }
+    h2 { font-family: 'Lato', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--gold); margin-top: 0; }
+    h3 { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--ink); margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 
-    /* CARTES KPI (LES INDICES) */
-    .kpi-grid {
+    /* TABLEAUX DE DONNÉES */
+    .data-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 0; /* Collé pour faire "Tableau" */
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .data-box {
+        border: 1px solid var(--border);
+        padding: 15px;
+        text-align: center;
+    }
+    .data-val { font-size: 16px; font-weight: bold; font-family: 'Playfair Display', serif; }
+    .data-lbl { font-size: 9px; text-transform: uppercase; color: var(--subtle); margin-top: 5px; }
+
+    /* ZONE DE RÉSULTAT */
+    .hero-result {
+        background-color: #f9f9f9;
+        border: 1px solid var(--ink);
+        padding: 30px;
+        text-align: center;
         margin: 30px 0;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        overflow: hidden;
     }
-    
-    .kpi-item {
-        text-align: center;
-        padding: 15px 5px;
-        background: #f8fafc;
-        border-right: 1px solid #e2e8f0;
+    .hero-amount { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: var(--ink); }
+    .hero-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--subtle); }
+
+    /* DÉTAIL CALCUL (MATHS) */
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border);
+        font-size: 14px;
     }
-    .kpi-item:last-child { border-right: none; background: #fff; }
-    
-    .kpi-val {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--primary);
-        font-family: 'Inter', sans-serif;
+    .calc-total {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 0;
+        font-weight: bold;
+        border-top: 2px solid var(--ink);
+        border-bottom: none;
+        margin-top: 10px;
+        font-size: 16px;
     }
-    
-    .kpi-label {
-        font-size: 9px;
-        text-transform: uppercase;
-        color: var(--subtle);
-        margin-top: 5px;
-        letter-spacing: 0.5px;
+    .math-formula {
+        font-family: 'Courier New', monospace;
+        background: #f4f4f4;
+        padding: 10px;
+        font-size: 12px;
+        color: #333;
+        margin: 10px 0;
     }
 
-    /* LE RÉSULTAT FINAL (HERO) */
-    .result-hero {
-        text-align: center;
-        padding: 40px 0;
-        margin: 20px 0;
-        background: linear-gradient(to bottom, #ffffff, #f8fafc);
-        border-top: 1px solid #e2e8f0;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .result-amount {
-        font-size: 52px;
-        font-family: 'Playfair Display', serif;
-        font-weight: 700;
-        color: var(--primary);
-    }
-    
-    .result-caption {
-        font-size: 11px;
-        color: var(--subtle);
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-    }
-
-    /* BADGES STATUT */
-    .status-badge {
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 50px;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-    .status-warning { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
-    .status-success { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
-    .status-neutral { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-
-    /* L'ACCORDÉON (EXPANDER) */
-    .streamlit-expanderHeader {
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        color: var(--subtle);
-        background-color: transparent;
-        border: none;
-    }
-    
-    /* IMPRESSION */
+    /* PRINT FIX */
     @media print {
-        .stApp { background: white; }
+        .stApp { background-color: white; }
         section[data-testid="stSidebar"] { display: none; }
+        .a4-sheet { box-shadow: none; margin: 0; width: 100%; padding: 0; }
         .block-container { padding: 0 !important; }
-        .report-sheet { box-shadow: none; margin: 0; border-top: none; width: 100%; max-width: 100%; }
-        .streamlit-expanderHeader { display: none; } /* On cache le bouton */
-        .streamlit-expanderContent { display: block !important; height: auto !important; opacity: 1 !important; visibility: visible !important; } 
     }
     </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. MOTEUR DE DONNÉES (ROBUSTE)
+# 3. DONNÉES ET FONCTIONS
 # ==============================================================================
 @st.cache_data
 def load_data():
@@ -203,196 +148,194 @@ def get_offset(t, years_back=0):
     except: return None
 
 # ==============================================================================
-# 4. SIDEBAR (PANNEAU DE CONTRÔLE)
+# 4. SIDEBAR (CONTROLES)
 # ==============================================================================
 with st.sidebar:
     st.markdown("### ⚙️ Paramètres")
-    
-    loyer_actuel = st.number_input(
-        "Loyer Annuel Actuel (€)", 
-        value=2155.28, step=100.0, format="%.2f"
-    )
+    loyer_actuel = st.number_input("Loyer Annuel (€)", value=2155.28, step=100.0, format="%.2f")
     
     if not df_indices.empty:
         liste_trimestres = df_indices["Trimestre"].tolist()[::-1]
-        trimestre_rev = st.selectbox("Trimestre Révision (N)", liste_trimestres)
+        trimestre_rev = st.selectbox("Trimestre Révision", liste_trimestres)
         
-        # Auto-Calcul des dates
+        # Auto-Calcul
         trimestre_ref = get_offset(trimestre_rev, 3)
         trimestre_n1 = get_offset(trimestre_rev, 1)
         trimestre_n2 = get_offset(trimestre_rev, 2)
         
-        # Récupération Indices
         ilc_rev = get_indice(trimestre_rev)
         ilc_ref = get_indice(trimestre_ref)
         ilc_n1 = get_indice(trimestre_n1)
         ilc_n2 = get_indice(trimestre_n2)
         
-        if ilc_ref:
-            st.success(f"🔗 Réf. Automatique (N-3) : **{trimestre_ref}**")
-        else:
-            st.warning("Données incomplètes pour calculer.")
-            
+        if not ilc_ref:
+            st.error("Données historiques manquantes.")
     else:
-        st.error("Base de données manquante.")
-        st.stop()
-
-    st.markdown("---")
-    st.caption("Impression PDF : `CTRL + P`")
+        st.error("Fichier Excel manquant.")
 
 # ==============================================================================
-# 5. LOGIQUE JURIDIQUE
+# 5. LOGIQUE DE CALCUL DÉTAILLÉE
 # ==============================================================================
 if ilc_rev and ilc_ref:
-    # 1. Qualification Période
+    # Qualification
     annee_float = int(trimestre_rev.split("-")[0]) + (int(trimestre_rev.split("-T")[1])/10)
-    
     cas = "D"
-    regime_label = "Droit Commun (Code de Commerce)"
-    if 2022.2 <= annee_float <= 2023.1: 
-        cas, regime_label = "A", "Loi Pouvoir d'Achat (Période A)"
-    elif 2023.2 <= annee_float <= 2024.1: 
-        cas, regime_label = "B", "Loi Pouvoir d'Achat (Période B)"
-    elif 2024.2 <= annee_float <= 2026.1: 
-        cas, regime_label = "C", "Loi Pouvoir d'Achat (Période C)"
+    regime_txt = "Droit Commun (Code de Commerce L.145-37)"
+    
+    if 2022.2 <= annee_float <= 2023.1: cas = "A"; regime_txt = "Dispositif Bouclier Loyer (Période A)"
+    elif 2023.2 <= annee_float <= 2024.1: cas = "B"; regime_txt = "Dispositif Bouclier Loyer (Période B)"
+    elif 2024.2 <= annee_float <= 2026.1: cas = "C"; regime_txt = "Dispositif Bouclier Loyer (Période C)"
 
-    # 2. Calcul Glissement
+    # Glissement
     glissement = 0.0
-    ref_gliss_txt = ""
-    if cas == "C" and ilc_n1 and ilc_n2: 
+    glissement_txt = ""
+    formule_litterale = ""
+    
+    if cas == "C" and ilc_n1 and ilc_n2:
         glissement = (ilc_n1 / ilc_n2) - 1
-        ref_gliss_txt = "N-1 / N-2"
-    elif ilc_rev and ilc_n1: 
+        glissement_txt = f"({ilc_n1} / {ilc_n2}) - 1"
+    elif ilc_rev and ilc_n1:
         glissement = (ilc_rev / ilc_n1) - 1
-        ref_gliss_txt = "N / N-1"
-        
+        glissement_txt = f"({ilc_rev} / {ilc_n1}) - 1"
+    
     is_plafonne = glissement >= 0.035
     
-    # 3. Calcul Final
+    # Construction du calcul détaillé
     nouveau_loyer = 0.0
-    formule_tex = ""
-    badge_html = ""
+    steps_html = ""
     
+    # Fonction helper pour le HTML des étapes
+    def add_step(label, value, is_bold=False):
+        style = "font-weight:bold;" if is_bold else ""
+        return f'<div class="calc-row"><span style="{style}">{label}</span><span>{value}</span></div>'
+
     if cas == "D":
         nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-        badge_html = '<span class="status-badge status-neutral">STANDARD</span>'
-        formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N}}{ILC_{ref}}"
-    
+        steps_html += add_step("Loyer de Base", f"{loyer_actuel:,.2f} €")
+        steps_html += add_step("x Coefficient Variation", f"{ilc_rev} / {ilc_ref}")
+        steps_html += add_step("= Ratio Multiplicateur", f"{ilc_rev/ilc_ref:.5f}")
+        formule_litterale = f"{loyer_actuel:.2f} × ({ilc_rev} ÷ {ilc_ref})"
+
     elif cas == "A":
+        steps_html += add_step("Loyer de Base", f"{loyer_actuel:,.2f} €")
         if is_plafonne:
             nouveau_loyer = loyer_actuel * (ilc_n1 / ilc_ref) * 1.035
-            badge_html = '<span class="status-badge status-warning">PLAFONNÉ (3.5%)</span>'
-            formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-1}}{ILC_{ref}} \times 1,035"
+            steps_html += add_step("x Variation Historique (N-1/Ref)", f"{ilc_n1} / {ilc_ref} = {ilc_n1/ilc_ref:.5f}")
+            steps_html += add_step("x Coefficient Plafonnement", "1.035 (+3.5%)", True)
+            formule_litterale = f"{loyer_actuel:.2f} × ({ilc_n1} ÷ {ilc_ref}) × 1,035"
         else:
             nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-            badge_html = '<span class="status-badge status-success">NON PLAFONNÉ</span>'
-            formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N}}{ILC_{ref}}"
+            steps_html += add_step("x Variation Réelle (N/Ref)", f"{ilc_rev} / {ilc_ref} = {ilc_rev/ilc_ref:.5f}")
+            steps_html += add_step("Note", "Glissement < 3.5%, pas de plafonnement.")
+            formule_litterale = f"{loyer_actuel:.2f} × ({ilc_rev} ÷ {ilc_ref})"
 
     elif cas == "B":
+        steps_html += add_step("Loyer de Base", f"{loyer_actuel:,.2f} €")
         if is_plafonne:
             nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * (1.035**2)
-            badge_html = '<span class="status-badge status-warning">DOUBLE PLAFOND (3.5%)</span>'
-            formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-2}}{ILC_{ref}} \times (1,035)^2"
+            steps_html += add_step("x Variation Historique (N-2/Ref)", f"{ilc_n2} / {ilc_ref} = {ilc_n2/ilc_ref:.5f}")
+            steps_html += add_step("x Double Plafonnement (1.035²)", f"{(1.035**2):.5f} (+7.12%)", True)
+            formule_litterale = f"{loyer_actuel:.2f} × ({ilc_n2} ÷ {ilc_ref}) × 1,035²"
         else:
             nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * 1.035 * (ilc_rev / ilc_n1)
-            badge_html = '<span class="status-badge status-success">COMPLEXE</span>'
-            formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-2}}{ILC_{ref}} \times 1,035 \times \frac{ILC_{N}}{ILC_{N-1}}"
+            steps_html += add_step("x Variation Historique (N-2/Ref)", f"{ilc_n2} / {ilc_ref}")
+            steps_html += add_step("x Coefficient 2022-2023", "1.035")
+            steps_html += add_step("x Variation Récente (N/N-1)", f"{ilc_rev} / {ilc_n1}")
+            formule_litterale = "Formule complexe Cas B (Non plafonné)"
 
     elif cas == "C":
+        steps_html += add_step("Loyer de Base", f"{loyer_actuel:,.2f} €")
         if is_plafonne:
             nouveau_loyer = loyer_actuel * (1.035**2) * (ilc_rev / ilc_n1)
-            badge_html = '<span class="status-badge status-warning">PLAFONNÉ (3.5%)</span>'
-            formule_tex = r"L_{rev} = L_{act} \times (1,035)^2 \times \frac{ILC_{N}}{ILC_{N-1}}"
+            steps_html += add_step("x Double Plafonnement (1.035²)", f"{(1.035**2):.5f}")
+            steps_html += add_step("x Variation Récente (N/N-1)", f"{ilc_rev} / {ilc_n1} = {ilc_rev/ilc_n1:.5f}")
+            formule_litterale = f"{loyer_actuel:.2f} × 1,035² × ({ilc_rev} ÷ {ilc_n1})"
         else:
             nouveau_loyer = loyer_actuel * 1.035 * (ilc_rev / ilc_n2)
-            badge_html = '<span class="status-badge status-success">NON PLAFONNÉ</span>'
-            formule_tex = r"L_{rev} = L_{act} \times 1,035 \times \frac{ILC_{N}}{ILC_{N-2}}"
+            steps_html += add_step("x Coefficient 2022-2023", "1.035")
+            steps_html += add_step("x Variation Récente (N/N-2)", f"{ilc_rev} / {ilc_n2}")
+            formule_litterale = f"{loyer_actuel:.2f} × 1,035 × ({ilc_rev} ÷ {ilc_n2})"
 
     # ==============================================================================
-    # 6. VISUALISATION (LA FEUILLE A4)
+    # 6. VISUALISATION A4 (HTML PUR)
     # ==============================================================================
     
-    # Début du Container A4
-    st.markdown('<div class="report-sheet">', unsafe_allow_html=True)
+    html_content = f"""
+    <div class="a4-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #1a1a1a; padding-bottom:15px;">
+            <div>
+                <div style="font-family:'Playfair Display'; font-size:24px; font-weight:bold;">ComptaxSolutions</div>
+                <div style="font-size:10px; text-transform:uppercase; letter-spacing:3px; color:#a38f60;">Expertise Fiscale & Digitale</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:12px;">CERTIFICAT DE RÉVISION</div>
+                <div style="font-size:12px; font-weight:bold;">{datetime.date.today().strftime('%d/%m/%Y')}</div>
+            </div>
+        </div>
 
-    # --- HEADER ---
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        st.markdown('<div class="report-subtitle">CERTIFICAT D\'EXPERTISE</div>', unsafe_allow_html=True)
-        st.markdown('<div class="report-title">Révision ILC</div>', unsafe_allow_html=True)
-        st.markdown(f'<div style="color:#64748B; font-size:14px; margin-top:5px;">Période : <b>{trimestre_ref}</b> → <b>{trimestre_rev}</b></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"""
-        <div style="text-align:right;">
-            <div style="font-weight:bold; font-size:12px; color:#1e293b; letter-spacing:1px;">DATE D'ÉDITION</div>
-            <div style="font-family:'Playfair Display'; font-size:16px;">{datetime.date.today().strftime('%d/%m/%Y')}</div>
+        <div style="margin-top:30px;">
+            <h2>1. Contexte de la Révision</h2>
+            <div style="font-size:14px; margin-top:10px;">
+                Conformément aux dispositions du bail et à l'article L.145-37 du Code de commerce, 
+                la révision triennale s'opère sur la base de l'indice ILC du <b>{trimestre_rev}</b>.
+            </div>
+            <div style="margin-top:15px; background:#f4f4f4; padding:10px; font-size:13px; border-left:4px solid #a38f60;">
+                <strong>Régime Juridique Identifié :</strong> {regime_txt}<br>
+                <em>Statut : {"⚠️ Plafonnement Activé" if is_plafonne and cas != 'D' else "✅ Indice Réel (Non Plafonné)"}</em>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+        <h3>2. Indices de Référence (ILC)</h3>
+        <div class="data-grid">
+            <div class="data-box">
+                <div class="data-val">{ilc_ref}</div>
+                <div class="data-lbl">RÉFÉRENCE<br>{trimestre_ref}</div>
+            </div>
+            <div class="data-box" style="background:#fcfcfc; color:#999;">
+                <div class="data-val">{ilc_n2 if ilc_n2 else '-'}</div>
+                <div class="data-lbl">INDICE N-2</div>
+            </div>
+            <div class="data-box" style="background:#fcfcfc; color:#999;">
+                <div class="data-val">{ilc_n1 if ilc_n1 else '-'}</div>
+                <div class="data-lbl">INDICE N-1</div>
+            </div>
+            <div class="data-box" style="border-color:#1a1a1a;">
+                <div class="data-val">{ilc_rev}</div>
+                <div class="data-lbl" style="color:#1a1a1a; font-weight:bold;">RÉVISION<br>{trimestre_rev}</div>
+            </div>
+        </div>
 
-    # --- KPI GRID (INDICES) ---
-    st.markdown(f"""
-    <div class="kpi-grid">
-        <div class="kpi-item">
-            <div class="kpi-val">{ilc_ref}</div>
-            <div class="kpi-label">RÉFÉRENCE<br>(N-3)</div>
+        <h3>3. Décomposition Arithmétique</h3>
+        <div style="margin-top:20px;">
+            <div style="margin-bottom:15px;">
+                <span style="font-size:12px; text-transform:uppercase; color:#666;">Formule Appliquée :</span>
+                <div class="math-formula">{formule_litterale}</div>
+            </div>
+            
+            {steps_html}
+            
+            <div class="calc-total">
+                <span>NOUVEAU LOYER ANNUEL (H.T. H.C.)</span>
+                <span>{nouveau_loyer:,.2f} €</span>
+            </div>
         </div>
-        <div class="kpi-item">
-            <div class="kpi-val">{ilc_n2 if ilc_n2 else '-'}</div>
-            <div class="kpi-label">INDICE<br>N-2</div>
+
+        <div class="hero-result">
+            <div class="hero-lbl">Montant Révisé</div>
+            <div class="hero-amount">{nouveau_loyer:,.2f} €</div>
+            <div style="font-size:12px; margin-top:10px; color:#666;">
+                Soit une évolution de <b>{((nouveau_loyer/loyer_actuel)-1)*100:+.2f}%</b> par rapport au loyer précédent.
+            </div>
         </div>
-        <div class="kpi-item">
-            <div class="kpi-val">{ilc_n1 if ilc_n1 else '-'}</div>
-            <div class="kpi-label">INDICE<br>N-1</div>
-        </div>
-        <div class="kpi-item">
-            <div class="kpi-val" style="color:#b4975a;">{ilc_rev}</div>
-            <div class="kpi-label" style="color:#b4975a;">RÉVISION<br>(N)</div>
+
+        <div style="position:absolute; bottom:2cm; width:calc(100% - 4cm); text-align:center; font-size:10px; color:#999; border-top:1px solid #eee; padding-top:10px;">
+            Ce document est généré par l'algorithme propriétaire de ComptaxSolutions.<br>
+            La validité juridique dépend de l'exactitude des indices saisis.
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
 
-    # --- RÉSULTAT HERO ---
-    st.markdown(f"""
-    <div class="result-hero">
-        <div class="result-caption">NOUVEAU LOYER ANNUEL (H.T. H.C.)</div>
-        <div class="result-amount">{nouveau_loyer:,.2f} €</div>
-        <div style="margin-top:15px;">{badge_html}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # --- AUDIT TRAIL (LE DÉTAIL DEROULANT) ---
-    with st.expander("🔎 DÉTAIL JURIDIQUE & FORMULE (CLIQUER)", expanded=False):
-        st.markdown("---")
-        ec1, ec2 = st.columns(2)
-        
-        with ec1:
-            st.markdown("#### 1. Analyse")
-            st.markdown(f"""
-            * **Régime :** {regime_label}
-            * **Glissement pertinent ({ref_gliss_txt}) :** {glissement:.2%}
-            """)
-            if is_plafonne and cas != "D":
-                st.caption("⚠️ Le glissement dépasse 3.5%, activant le bouclier loyer.")
-            else:
-                st.caption("✅ Le glissement est inférieur au seuil de plafonnement.")
-
-        with ec2:
-            st.markdown("#### 2. Preuve Mathématique")
-            st.latex(formule_tex)
-            st.caption(f"Calcul vérifié : {nouveau_loyer:.4f} €")
-
-    # --- FOOTER AVEC BRANDING ---
-    st.markdown("""
-    <div style="text-align:center; margin-top:60px; padding-top:20px; border-top:1px solid #f1f5f9;">
-        <p style="font-size:10px; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">
-            Création de ComptaxSolutions
-        </p>
-    </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(html_content, unsafe_allow_html=True)
 
 else:
-    # ECRAN D'ACCUEIL VIDE MAIS PROPRE
-    st.write("")
+    st.info("Veuillez sélectionner un trimestre valide dans la barre latérale.")
