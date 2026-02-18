@@ -3,144 +3,160 @@ import pandas as pd
 import datetime
 
 # ==============================================================================
-# 1. CONFIGURATION "LUXURY"
+# 1. CONFIGURATION DU "COCKPIT"
 # ==============================================================================
 st.set_page_config(
-    page_title="Lease Analytics | Révision ILC",
-    page_icon="💎",
+    page_title="Lease Valuation | Premium Edition",
+    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# 2. DESIGN SYSTEM (CSS AVANCÉ & PRINT)
+# 2. DESIGN SYSTEM "TIER-1 CONSULTING" (CSS)
 # ==============================================================================
 st.markdown("""
     <style>
-    /* --- FONTS & COLORS --- */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
-    
+    /* IMPORTS FONTS LUXE */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
     :root {
-        --primary: #0F172A; /* Navy Blue Profond */
-        --accent: #D4AF37; /* Or Métallique */
-        --bg-color: #F8FAFC; /* Gris très pâle */
-        --card-bg: #FFFFFF;
-        --text-main: #334155;
+        --primary: #1e293b;   /* Slate 800 - Le "Noir" Corporate */
+        --gold: #b4975a;      /* Or brossé - Luxe discret */
+        --paper: #ffffff;     /* Blanc pur */
+        --bg: #f1f5f9;        /* Gris très léger pour le fond */
+        --subtle: #94a3b8;    /* Gris texte secondaire */
     }
 
-    /* --- GENERAL LAYOUT --- */
+    /* STRUCTURE GÉNÉRALE */
     .stApp {
-        background-color: var(--bg-color);
+        background-color: var(--bg);
         font-family: 'Inter', sans-serif;
     }
     
-    /* Cacher les éléments Streamlit par défaut */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* MASQUER LES ÉLÉMENTS STREAMLIT PAR DÉFAUT */
+    #MainMenu, footer, header {visibility: hidden;}
 
-    /* --- SIDEBAR (CONTROLE) --- */
-    section[data-testid="stSidebar"] {
-        background-color: var(--card-bg);
-        border-right: 1px solid #E2E8F0;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+    /* LA FEUILLE A4 (CONTAINER PRINCIPAL) */
+    .report-sheet {
+        background-color: var(--paper);
+        max-width: 21cm; /* Largeur A4 */
+        margin: 0 auto;
+        padding: 40px 60px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+        border-top: 5px solid var(--primary);
+        min-height: 29.7cm; /* Hauteur A4 min */
     }
-    
-    /* --- TITRES --- */
+
+    /* TYPOGRAPHIE */
     h1, h2, h3 {
-        font-family: 'Playfair Display', serif; /* Font "Luxe" */
+        font-family: 'Playfair Display', serif;
         color: var(--primary);
     }
     
-    /* --- CARTE "DOCUMENT" (Le coeur de l'app) --- */
-    .report-container {
-        background-color: white;
-        padding: 60px;
-        border-radius: 2px; /* Style feuille A4 */
-        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-        max-width: 900px;
-        margin: auto;
-        border-top: 6px solid var(--accent);
+    .report-title {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 5px;
     }
     
-    .report-header {
-        border-bottom: 2px solid #F1F5F9;
-        padding-bottom: 20px;
-        margin-bottom: 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .report-subtitle {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--gold);
+        font-weight: 600;
+    }
+
+    /* CARTES KPI (LES INDICES) */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin: 30px 0;
+        padding: 20px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
     }
     
-    .metric-box {
-        background: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 15px;
+    .kpi-item {
         text-align: center;
     }
     
-    .metric-value {
-        font-size: 1.4rem;
+    .kpi-val {
+        font-size: 20px;
         font-weight: 600;
         color: var(--primary);
+        font-family: 'Inter', sans-serif;
     }
     
-    .metric-label {
-        font-size: 0.8rem;
+    .kpi-label {
+        font-size: 10px;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        color: #64748B;
+        color: var(--subtle);
         margin-top: 5px;
     }
 
-    /* --- LE RÉSULTAT FINAL --- */
-    .final-result-box {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
+    /* LE RÉSULTAT FINAL (HERO) */
+    .result-hero {
         text-align: center;
-        margin-top: 30px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+        padding: 40px 0;
+        margin: 30px 0;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
     }
     
-    .gold-text {
-        color: var(--accent);
-        font-weight: bold;
+    .result-amount {
+        font-size: 56px;
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: var(--primary);
+    }
+    
+    .result-caption {
+        font-size: 12px;
+        color: var(--subtle);
+        letter-spacing: 1px;
+        text-transform: uppercase;
     }
 
-    /* --- PRINT CSS (LA MAGIE) --- */
+    /* BADGES STATUT */
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .status-warning { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+    .status-success { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+    .status-neutral { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+    /* L'ACCORDÉON (EXPANDER) */
+    .streamlit-expanderHeader {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: var(--subtle);
+        background-color: transparent;
+        border: none;
+    }
+    
+    /* IMPRESSION */
     @media print {
-        /* Cacher tout ce qui n'est pas le rapport */
-        section[data-testid="stSidebar"] { display: none !important; }
-        .stApp { background-color: white !important; }
-        header, footer, .stDeployButton { display: none !important; }
-        
-        /* Ajuster le rapport pour le papier */
-        .report-container {
-            box-shadow: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border: none !important;
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-        
-        /* Cacher les boutons d'aide/expanders si on veut une version clean */
-        .streamlit-expanderHeader { display: none; }
-        .streamlit-expanderContent { display: block !important; border: none !important; }
-        
-        body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
+        .stApp { background: white; }
+        section[data-testid="stSidebar"] { display: none; }
+        .report-sheet { box-shadow: none; margin: 0; border-top: none; }
+        .streamlit-expanderHeader { display: none; } /* On cache le bouton */
+        .streamlit-expanderContent { display: block !important; height: auto !important; opacity: 1 !important; visibility: visible !important; } /* On force le contenu à s'afficher */
     }
     </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. MOTEUR DE DONNÉES & LOGIQUE (ROBUSTE)
+# 3. MOTEUR DE DONNÉES (ROBUSTE)
 # ==============================================================================
 @st.cache_data
 def load_data():
@@ -153,12 +169,12 @@ def load_data():
 
 df_indices = load_data()
 
-def get_indice_value(t):
+def get_indice(t):
     if df_indices.empty: return None
     r = df_indices[df_indices["Trimestre"] == t]
     return r.iloc[0]["Indice"] if not r.empty else None
 
-def get_offset_trimestre(t, years_back=0):
+def get_offset(t, years_back=0):
     try:
         p = t.split("-T")
         return f"{int(p[0]) - years_back}-T{int(p[1])}"
@@ -167,200 +183,191 @@ def get_offset_trimestre(t, years_back=0):
 # ==============================================================================
 # 4. SIDEBAR (PANNEAU DE CONTRÔLE)
 # ==============================================================================
-
 with st.sidebar:
-    st.markdown("## ⚙️ Paramètres")
-    st.markdown("---")
+    st.markdown("### ⚙️ Paramètres du Bail")
     
-    # Input Stylisé
     loyer_actuel = st.number_input(
         "Loyer Annuel Actuel (€)", 
-        value=2155.28, step=100.0, format="%.2f",
-        help="Montant H.T. H.C. avant révision"
+        value=2155.28, step=100.0, format="%.2f"
     )
-    
-    st.markdown("<br>", unsafe_allow_html=True)
     
     if not df_indices.empty:
         liste_trimestres = df_indices["Trimestre"].tolist()[::-1]
-        trimestre_rev = st.selectbox("Trimestre de Révision (N)", liste_trimestres)
+        trimestre_rev = st.selectbox("Trimestre Révision (N)", liste_trimestres)
         
-        # Logique Auto
-        trimestre_ref_auto = get_offset_trimestre(trimestre_rev, years_back=3)
-        ilc_rev = get_indice_value(trimestre_rev)
-        ilc_ref = get_indice_value(trimestre_ref_auto)
+        # Auto-Calcul des dates
+        trimestre_ref = get_offset(trimestre_rev, 3)
+        trimestre_n1 = get_offset(trimestre_rev, 1)
+        trimestre_n2 = get_offset(trimestre_rev, 2)
         
-        st.markdown(f"""
-        <div style="background:#F1F5F9; padding:10px; border-radius:5px; font-size:0.85rem; color:#475569;">
-            <strong>🔗 Auto-Link :</strong><br>
-            Le trimestre de référence a été fixé automatiquement au <b>{trimestre_ref_auto}</b> (N-3).
-        </div>
-        """, unsafe_allow_html=True)
-        
+        # Récupération Indices
+        ilc_rev = get_indice(trimestre_rev)
+        ilc_ref = get_indice(trimestre_ref)
+        ilc_n1 = get_indice(trimestre_n1)
+        ilc_n2 = get_indice(trimestre_n2)
+
+        st.success(f"🔗 Réf. Automatique (N-3) : **{trimestre_ref}**")
     else:
-        st.error("Base de données indices manquante.")
+        st.error("Base de données manquante.")
         st.stop()
 
     st.markdown("---")
-    st.info("💡 **Astuce Pro :** Pour imprimer le rapport ou l'enregistrer en PDF, faites `CTRL + P` (ou `CMD + P` sur Mac).")
+    st.caption("Pour imprimer le rapport officiel : `CTRL + P`")
 
 # ==============================================================================
-# 5. MOTEUR DE CALCUL (BACKEND)
+# 5. LOGIQUE JURIDIQUE (LE CERVEAU)
 # ==============================================================================
 if ilc_rev and ilc_ref:
-    # Indices intermédiaires
-    trimestre_n1 = get_offset_trimestre(trimestre_rev, years_back=1)
-    trimestre_n2 = get_offset_trimestre(trimestre_rev, years_back=2)
-    ilc_n1 = get_indice_value(trimestre_n1)
-    ilc_n2 = get_indice_value(trimestre_n2)
-    
-    # Qualification Juridique
+    # 1. Qualification Période
     annee_float = int(trimestre_rev.split("-")[0]) + (int(trimestre_rev.split("-T")[1])/10)
     
     cas = "D"
-    if 2022.2 <= annee_float <= 2023.1: cas = "A"
-    elif 2023.2 <= annee_float <= 2024.1: cas = "B"
-    elif 2024.2 <= annee_float <= 2026.1: cas = "C"
-    
-    # Calcul Glissement
+    regime_label = "Droit Commun (Code de Commerce)"
+    if 2022.2 <= annee_float <= 2023.1: 
+        cas, regime_label = "A", "Loi Pouvoir d'Achat (Période A)"
+    elif 2023.2 <= annee_float <= 2024.1: 
+        cas, regime_label = "B", "Loi Pouvoir d'Achat (Période B)"
+    elif 2024.2 <= annee_float <= 2026.1: 
+        cas, regime_label = "C", "Loi Pouvoir d'Achat (Période C)"
+
+    # 2. Calcul Glissement
     glissement = 0.0
-    if cas == "C" and ilc_n1 and ilc_n2: glissement = (ilc_n1 / ilc_n2) - 1
-    elif ilc_rev and ilc_n1: glissement = (ilc_rev / ilc_n1) - 1
+    ref_gliss_txt = ""
+    if cas == "C" and ilc_n1 and ilc_n2: 
+        glissement = (ilc_n1 / ilc_n2) - 1
+        ref_gliss_txt = "N-1 / N-2"
+    elif ilc_rev and ilc_n1: 
+        glissement = (ilc_rev / ilc_n1) - 1
+        ref_gliss_txt = "N / N-1"
         
     is_plafonne = glissement >= 0.035
     
-    # Calcul Final & Textes
+    # 3. Calcul Final
     nouveau_loyer = 0.0
-    titre_regime = ""
-    badge_html = ""
     formule_tex = ""
+    badge_html = ""
     
     if cas == "D":
         nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-        titre_regime = "Droit Commun (Code de Commerce)"
-        badge_html = "<span style='color:#64748B;'>Standard</span>"
+        badge_html = '<span class="status-badge status-neutral">STANDARD</span>'
         formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N}}{ILC_{ref}}"
     
     elif cas == "A":
-        titre_regime = "Loi Pouvoir d'Achat (Cas A)"
         if is_plafonne:
             nouveau_loyer = loyer_actuel * (ilc_n1 / ilc_ref) * 1.035
-            badge_html = "<span style='color:#D97706;'>⚠️ Plafonné</span>"
+            badge_html = '<span class="status-badge status-warning">PLAFONNÉ (3.5%)</span>'
             formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-1}}{ILC_{ref}} \times 1,035"
         else:
             nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-            badge_html = "<span style='color:#059669;'>Non Plafonné</span>"
+            badge_html = '<span class="status-badge status-success">NON PLAFONNÉ</span>'
             formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N}}{ILC_{ref}}"
 
     elif cas == "B":
-        titre_regime = "Loi Pouvoir d'Achat (Cas B)"
         if is_plafonne:
             nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * (1.035**2)
-            badge_html = "<span style='color:#D97706;'>⚠️ Plafonné (Double)</span>"
+            badge_html = '<span class="status-badge status-warning">DOUBLE PLAFOND (3.5%)</span>'
             formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-2}}{ILC_{ref}} \times (1,035)^2"
         else:
             nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * 1.035 * (ilc_rev / ilc_n1)
-            badge_html = "<span style='color:#059669;'>Complexe</span>"
+            badge_html = '<span class="status-badge status-success">COMPLEXE (NON PLAFONNÉ)</span>'
             formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-2}}{ILC_{ref}} \times 1,035 \times \frac{ILC_{N}}{ILC_{N-1}}"
 
     elif cas == "C":
-        titre_regime = "Loi Pouvoir d'Achat (Cas C)"
         if is_plafonne:
             nouveau_loyer = loyer_actuel * (1.035**2) * (ilc_rev / ilc_n1)
-            badge_html = "<span style='color:#D97706;'>⚠️ Plafonné</span>"
+            badge_html = '<span class="status-badge status-warning">PLAFONNÉ (3.5%)</span>'
             formule_tex = r"L_{rev} = L_{act} \times (1,035)^2 \times \frac{ILC_{N}}{ILC_{N-1}}"
         else:
             nouveau_loyer = loyer_actuel * 1.035 * (ilc_rev / ilc_n2)
-            badge_html = "<span style='color:#059669;'>Non Plafonné</span>"
+            badge_html = '<span class="status-badge status-success">NON PLAFONNÉ</span>'
             formule_tex = r"L_{rev} = L_{act} \times 1,035 \times \frac{ILC_{N}}{ILC_{N-2}}"
 
-# ==============================================================================
-# 6. VISUALISATION (LA PAGE A4 VIRTUELLE)
-# ==============================================================================
+    # ==============================================================================
+    # 6. VISUALISATION (LA FEUILLE A4)
+    # ==============================================================================
+    
+    # Début du Container A4
+    st.markdown('<div class="report-sheet">', unsafe_allow_html=True)
 
-# On centre tout dans une "feuille" blanche
-st.markdown('<div class="report-container">', unsafe_allow_html=True)
+    # --- HEADER ---
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.markdown('<div class="report-subtitle">RAPPORT D\'EXPERTISE</div>', unsafe_allow_html=True)
+        st.markdown('<div class="report-title">Révision Triennale ILC</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="color:#64748B; font-size:14px;">Révision au titre du <b>{trimestre_rev}</b></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"""
+        <div style="text-align:right;">
+            <div style="font-weight:bold; font-size:14px; color:#1e293b;">DATE D'ÉDITION</div>
+            <div style="font-family:'Playfair Display'; font-size:18px;">{datetime.date.today().strftime('%d.%m.%Y')}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-# --- Header du Rapport ---
-st.markdown(f"""
-<div class="report-header">
-    <div>
-        <h1 style="margin:0; font-size:24px;">CERTIFICAT DE RÉVISION</h1>
-        <p style="margin:0; color:#64748B;">Baux Commerciaux & Professionnels</p>
-    </div>
-    <div style="text-align:right;">
-        <p style="margin:0; font-weight:bold;">Date : {datetime.date.today().strftime('%d/%m/%Y')}</p>
-        <p style="margin:0; font-size:12px; color:#94A3B8;">Réf Dossier : REV-{trimestre_rev}</p>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-# --- Grille des Indices ---
-st.markdown("### 1. Données de Référence")
-st.markdown("<br>", unsafe_allow_html=True)
-
-c1, c2, c3, c4 = st.columns(4)
-with c1:
+    # --- KPI GRID (INDICES) ---
     st.markdown(f"""
-    <div class="metric-box">
-        <div class="metric-value">{ilc_ref}</div>
-        <div class="metric-label">Réf ({trimestre_ref_auto})</div>
-    </div>
-    """, unsafe_allow_html=True)
-with c2:
-    st.markdown(f"""
-    <div class="metric-box">
-        <div class="metric-value">{ilc_n2 if ilc_n2 else '-'}</div>
-        <div class="metric-label">Indice N-2</div>
-    </div>
-    """, unsafe_allow_html=True)
-with c3:
-    st.markdown(f"""
-    <div class="metric-box">
-        <div class="metric-value">{ilc_n1 if ilc_n1 else '-'}</div>
-        <div class="metric-label">Indice N-1</div>
-    </div>
-    """, unsafe_allow_html=True)
-with c4:
-    st.markdown(f"""
-    <div class="metric-box" style="border-color:var(--accent); background:#FFFAF0;">
-        <div class="metric-value" style="color:var(--accent);">{ilc_rev}</div>
-        <div class="metric-label" style="color:#B7950B;">Révision ({trimestre_rev})</div>
+    <div class="kpi-grid">
+        <div class="kpi-item">
+            <div class="kpi-val">{ilc_ref}</div>
+            <div class="kpi-label">RÉFÉRENCE<br>({trimestre_ref})</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-val">{ilc_n2 if ilc_n2 else '-'}</div>
+            <div class="kpi-label">INDICE<br>N-2</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-val">{ilc_n1 if ilc_n1 else '-'}</div>
+            <div class="kpi-label">INDICE<br>N-1</div>
+        </div>
+        <div class="kpi-item" style="border-left:1px solid #e2e8f0;">
+            <div class="kpi-val" style="color:#b4975a;">{ilc_rev}</div>
+            <div class="kpi-label" style="color:#b4975a;">RÉVISION<br>({trimestre_rev})</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<br><br>", unsafe_allow_html=True)
+    # --- RÉSULTAT HERO ---
+    st.markdown(f"""
+    <div class="result-hero">
+        <div class="result-caption">NOUVEAU LOYER ANNUEL (H.T. H.C.)</div>
+        <div class="result-amount">{nouveau_loyer:,.2f} €</div>
+        <div style="margin-top:10px;">{badge_html}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- Analyse Juridique ---
-st.markdown("### 2. Analyse Juridique & Calcul")
-st.markdown(f"""
-<div style="padding: 20px; border-left: 4px solid var(--primary); background: #F8FAFC;">
-    <p style="margin:0; font-weight:600; font-size:1.1rem;">Régime Applicable : {titre_regime}</p>
-    <p style="margin-top:5px; margin-bottom:15px;">Statut Plafonnement : {badge_html}</p>
-    <p style="font-style:italic; color:#475569;">
-        Le glissement annuel de l'indice pertinent s'établit à <b>{glissement:.2%}</b>.
-        {"Le seuil légal de 3,5% est dépassé, déclenchant le mécanisme de bouclier." if is_plafonne and cas != 'D' else "Ce taux reste inférieur ou égal au plafond légal (ou hors champ d'application)."}
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    # --- AUDIT TRAIL (LE DÉTAIL DEROULANT) ---
+    st.markdown("---")
+    with st.expander("🔎 AUDITER LE CALCUL & LA FORMULE (CLIQUER POUR DÉROULER)", expanded=False):
+        
+        ec1, ec2 = st.columns(2)
+        
+        with ec1:
+            st.markdown("#### 1. Qualification Juridique")
+            st.markdown(f"""
+            * **Régime :** {regime_label}
+            * **Glissement pertinent ({ref_gliss_txt}) :** {glissement:.2%}
+            * **Seuil Légal :** 3.50%
+            """)
+            if is_plafonne and cas != "D":
+                st.warning("Le glissement dépasse 3.5%. Le mécanisme de plafonnement s'active pour protéger le locataire.")
+            else:
+                st.info("Le glissement est conforme ou le régime ne prévoit pas de plafonnement.")
 
-# Affichage formule LaTeX propre
-st.markdown("<br>", unsafe_allow_html=True)
-st.latex(formule_tex)
+        with ec2:
+            st.markdown("#### 2. Formule Mathématique")
+            st.latex(formule_tex)
+            st.markdown("**Vérification Numérique :**")
+            st.code(f"Calcul = {nouveau_loyer:.4f} €")
 
-# --- Résultat Final ---
-st.markdown(f"""
-<div class="final-result-box">
-    <p style="margin:0; font-size:14px; text-transform:uppercase; letter-spacing:2px; opacity:0.8;">Nouveau Loyer Annuel</p>
-    <p style="margin:10px 0; font-size:42px; font-weight:700; font-family:'Playfair Display';">{nouveau_loyer:,.2f} €</p>
-    <p style="margin:0; font-size:14px; opacity:0.8;">(Hors Taxes & Hors Charges)</p>
-</div>
-""", unsafe_allow_html=True)
+    # --- FOOTER ---
+    st.markdown("""
+    <div style="text-align:center; margin-top:40px; font-size:10px; color:#cbd5e1;">
+        DOCUMENT GÉNÉRÉ PAR TAX-TECH SOLUTIONS • STRICTEMENT CONFIDENTIEL
+    </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- Footer du rapport ---
-st.markdown("""
-<div style="margin-top:50px; text-align:center; font-size:10px; color:#CBD5E1;">
-    <p>Document généré automatiquement par Lease Analytics Tech. Valeur informative.</p>
-</div>
-</div>
-""", unsafe_allow_html=True) # Fin du container rapport
+else:
+    # --- ECRAN D'ACCUEIL (SI PAS DE DONNEES) ---
+    st.info("Veuillez configurer les paramètres dans le panneau latéral pour générer le rapport.")
