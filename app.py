@@ -1,107 +1,42 @@
 import streamlit as st
 import pandas as pd
-import datetime
 
 # ==============================================================================
-# 1. CONFIGURATION INITIALE
+# 1. CONFIGURATION
 # ==============================================================================
-st.set_page_config(
-    page_title="ComptaxSolutions | Lease Valuation",
-    page_icon="🏛️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Révision ILC Expert", page_icon="⚖️", layout="wide")
 
-# ==============================================================================
-# 2. DESIGN SYSTEM (CSS GLOBAL)
-# ==============================================================================
-# On injecte le CSS en une seule fois pour garantir le style
 st.markdown("""
-<style>
-    /* Import des Polices de Luxe */
-    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap');
-
-    /* Reset Global */
-    .stApp {
-        background-color: #f0f2f5; /* Gris très doux pour le fond de l'application */
-        font-family: 'Lato', sans-serif;
+    <style>
+    .stApp { background-color: #F8F9FA; }
+    h1 { color: #2C3E50; }
+    /* Style spécifique pour l'expander (le détail) */
+    .streamlit-expanderHeader {
+        font-weight: bold;
+        color: #2E86C1;
+        background-color: white;
+        border-radius: 5px;
     }
-    
-    /* Masquer les éléments parasites */
-    header, footer, #MainMenu { visibility: hidden; }
-    
-    /* Le Conteneur "Feuille A4" */
-    .report-container {
-        background-color: #ffffff;
-        max-width: 21cm;
-        min-height: 29.7cm;
-        margin: 0 auto; /* Centré horizontalement */
-        padding: 60px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Ombre portée élégante */
-        color: #333;
-        border-top: 5px solid #1a1a1a; /* La barre noire signature */
+    .badge-warning {
+        background-color: #FEF9E7; color: #D35400; 
+        padding: 5px 10px; border-radius: 4px; border: 1px solid #F5B041; 
+        font-weight: bold;
     }
-
-    /* Titres */
-    h1.brand { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #1a1a1a; margin: 0; }
-    div.tagline { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: #a38f60; margin-top: 5px; }
-    
-    h2.section { 
-        font-family: 'Playfair Display', serif; 
-        font-size: 18px; 
-        color: #1a1a1a; 
-        border-bottom: 1px solid #eee; 
-        padding-bottom: 10px; 
-        margin-top: 40px; 
-        margin-bottom: 20px;
+    .badge-success {
+        background-color: #EAFAF1; color: #27AE60; 
+        padding: 5px 10px; border-radius: 4px; border: 1px solid #ABEBC6; 
+        font-weight: bold;
     }
-
-    /* Grille de données (Indices) */
-    .indices-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
+    .badge-info {
+        background-color: #EBF5FB; color: #2980B9;
+        padding: 5px 10px; border-radius: 4px; border: 1px solid #AED6F1;
+        font-weight: bold;
     }
-    .index-box {
-        border: 1px solid #e0e0e0;
-        padding: 15px;
-        text-align: center;
-        border-radius: 4px;
-    }
-    .index-val { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: bold; color: #1a1a1a; }
-    .index-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-top: 5px; }
-    
-    /* Lignes de calcul */
-    .calc-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 0;
-        border-bottom: 1px dashed #eee;
-        font-size: 14px;
-    }
-    
-    /* Résultat Final (Hero) */
-    .result-box {
-        background-color: #fafafa;
-        border: 1px solid #1a1a1a;
-        padding: 30px;
-        text-align: center;
-        margin-top: 40px;
-    }
-    .result-amount { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: #1a1a1a; }
-    
-    /* Mode Impression (CTRL+P) */
-    @media print {
-        .stApp { background-color: white; }
-        section[data-testid="stSidebar"] { display: none; } /* Cache la barre latérale */
-        .report-container { box-shadow: none; margin: 0; width: 100%; max-width: 100%; border: none; }
-        .block-container { padding: 0 !important; }
-    }
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. MOTEUR DE DONNÉES (Chargement & Fonctions)
+# 2. CHARGEMENT DES DONNÉES
 # ==============================================================================
 @st.cache_data
 def load_data():
@@ -110,198 +45,183 @@ def load_data():
         df.columns = ["Trimestre", "Indice"]
         df['Trimestre'] = df['Trimestre'].astype(str).str.strip()
         return df
-    except:
+    except Exception as e:
+        st.error(f"Erreur Excel : {e}")
         return pd.DataFrame()
 
 df_indices = load_data()
 
-def get_indice(t):
+def get_indice_value(trimestre_str):
     if df_indices.empty: return None
-    r = df_indices[df_indices["Trimestre"] == t]
-    return r.iloc[0]["Indice"] if not r.empty else None
+    row = df_indices[df_indices["Trimestre"] == trimestre_str]
+    if not row.empty: return row.iloc[0]["Indice"]
+    return None
 
-def get_offset(t, years_back=0):
+def get_offset_trimestre(trimestre, years_back=0):
     try:
-        p = t.split("-T")
-        return f"{int(p[0]) - years_back}-T{int(p[1])}"
+        parts = trimestre.split("-T")
+        year = int(parts[0])
+        quarter = int(parts[1])
+        new_year = year - years_back
+        return f"{new_year}-T{quarter}"
     except: return None
 
 # ==============================================================================
-# 4. BARRE LATÉRALE (CONTROLES)
+# 3. INTERFACE
 # ==============================================================================
-with st.sidebar:
-    st.header("Paramètres")
-    loyer_actuel = st.number_input("Loyer Annuel (€)", value=2155.28, step=100.0, format="%.2f")
-    
-    if not df_indices.empty:
-        # Tri inversé pour avoir les dates récentes en haut
+
+st.title("⚖️ Simulateur de Révision ILC")
+st.caption("Conforme Loi Pouvoir d'Achat (Plafonnement) & Droit Commun")
+
+if df_indices.empty:
+    st.warning("⚠️ Veuillez charger le fichier 'indices_ilc.xlsx'.")
+    st.stop()
+
+col_left, col_right = st.columns([1, 2], gap="large")
+
+# --- COLONNE GAUCHE : SAISIE ---
+with col_left:
+    with st.container(border=True):
+        st.subheader("1. Paramètres du Bail")
+        loyer_actuel = st.number_input("Loyer Annuel Actuel (€)", value=2155.28, step=100.0, format="%.2f")
+        st.divider()
+        
         liste_trimestres = df_indices["Trimestre"].tolist()[::-1]
-        trimestre_rev = st.selectbox("Trimestre de Révision", liste_trimestres)
+        trimestre_rev = st.selectbox("📅 Trimestre de Révision (N)", liste_trimestres)
         
-        # Calcul automatique des dates
-        trimestre_ref = get_offset(trimestre_rev, 3)
-        trimestre_n1 = get_offset(trimestre_rev, 1)
-        trimestre_n2 = get_offset(trimestre_rev, 2)
+        # AUTO-LOCK 3 ANS
+        trimestre_ref_auto = get_offset_trimestre(trimestre_rev, years_back=3)
+        ilc_rev = get_indice_value(trimestre_rev)
+        ilc_ref = get_indice_value(trimestre_ref_auto)
         
-        # Récupération des valeurs
-        ilc_rev = get_indice(trimestre_rev)
-        ilc_ref = get_indice(trimestre_ref)
-        ilc_n1 = get_indice(trimestre_n1)
-        ilc_n2 = get_indice(trimestre_n2)
-        
-        if not ilc_ref:
-            st.warning(f"⚠️ Données manquantes pour {trimestre_ref} dans le fichier Excel.")
-    else:
-        st.error("Fichier 'indices_ilc.xlsx' introuvable.")
-        st.stop()
-
-# ==============================================================================
-# 5. LOGIQUE DE CALCUL (BACKEND)
-# ==============================================================================
-if ilc_rev and ilc_ref:
-    # 1. Identification du Cas Juridique
-    annee_float = int(trimestre_rev.split("-")[0]) + (int(trimestre_rev.split("-T")[1])/10)
-    
-    cas = "D"
-    regime_nom = "Droit Commun (Code de Commerce)"
-    
-    if 2022.2 <= annee_float <= 2023.1: cas, regime_nom = "A", "Dispositif Bouclier (Période A)"
-    elif 2023.2 <= annee_float <= 2024.1: cas, regime_nom = "B", "Dispositif Bouclier (Période B)"
-    elif 2024.2 <= annee_float <= 2026.1: cas, regime_nom = "C", "Dispositif Bouclier (Période C)"
-
-    # 2. Test du Glissement
-    glissement = 0.0
-    if cas == "C" and ilc_n1 and ilc_n2: glissement = (ilc_n1 / ilc_n2) - 1
-    elif ilc_rev and ilc_n1: glissement = (ilc_rev / ilc_n1) - 1
-    
-    is_plafonne = glissement >= 0.035
-    
-    # 3. Exécution du Calcul
-    nouveau_loyer = 0.0
-    lignes_calcul = "" # On va stocker le HTML des lignes ici
-    formule_txt = ""
-
-    # Helper pour créer une ligne HTML sans risque d'indentation
-    def row_html(label, value, is_bold=False):
-        style = "font-weight:bold; color:#1a1a1a;" if is_bold else "color:#666;"
-        return f"""<div class="calc-row"><span style="{style}">{label}</span><span style="font-weight:bold; color:#1a1a1a;">{value}</span></div>"""
-
-    if cas == "D":
-        nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-        lignes_calcul += row_html("Loyer de Base", f"{loyer_actuel:,.2f} €")
-        lignes_calcul += row_html(f"Ratio Variation ({ilc_rev} / {ilc_ref})", f"x {ilc_rev/ilc_ref:.5f}")
-        formule_txt = f"{loyer_actuel:.2f} × ({ilc_rev} ÷ {ilc_ref})"
-        
-    elif cas == "A":
-        lignes_calcul += row_html("Loyer de Base", f"{loyer_actuel:,.2f} €")
-        if is_plafonne:
-            nouveau_loyer = loyer_actuel * (ilc_n1 / ilc_ref) * 1.035
-            lignes_calcul += row_html("Variation Historique (N-1)", f"x {ilc_n1/ilc_ref:.5f}")
-            lignes_calcul += row_html("Plafonnement Légal", "x 1.035 (+3.5%)", True)
+        if ilc_ref:
+            st.success(f"📌 Réf (-3 ans) : **{trimestre_ref_auto}**")
         else:
+            st.error(f"⚠️ Indice {trimestre_ref_auto} manquant.")
+
+# --- COLONNE DROITE : CALCUL & RAISONNEMENT ---
+with col_right:
+    if ilc_rev and ilc_ref:
+        
+        # Calculs indices intermédiaires
+        trimestre_n1 = get_offset_trimestre(trimestre_rev, years_back=1)
+        trimestre_n2 = get_offset_trimestre(trimestre_rev, years_back=2)
+        ilc_n1 = get_indice_value(trimestre_n1)
+        ilc_n2 = get_indice_value(trimestre_n2)
+        
+        # --- LOGIQUE JURIDIQUE ---
+        annee_float = int(trimestre_rev.split("-")[0]) + (int(trimestre_rev.split("-T")[1])/10)
+        
+        cas = "D"
+        if 2022.2 <= annee_float <= 2023.1: cas = "A"
+        elif 2023.2 <= annee_float <= 2024.1: cas = "B"
+        elif 2024.2 <= annee_float <= 2026.1: cas = "C"
+        
+        # Glissement
+        glissement = 0.0
+        txt_glissement = ""
+        if cas == "C" and ilc_n1 and ilc_n2:
+            glissement = (ilc_n1 / ilc_n2) - 1
+            txt_glissement = "(Indice N-1 / Indice N-2)"
+        elif ilc_rev and ilc_n1:
+            glissement = (ilc_rev / ilc_n1) - 1
+            txt_glissement = "(Indice N / Indice N-1)"
+            
+        is_plafonne = glissement >= 0.035
+        
+        # Calcul Montant
+        nouveau_loyer = 0.0
+        formule_latex = ""
+        raisonnement_txt = ""
+        
+        if cas == "D":
             nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-            lignes_calcul += row_html("Variation Réelle (N)", f"x {ilc_rev/ilc_ref:.5f}")
+            raisonnement_txt = "Nous sommes hors période de plafonnement. Application du droit commun."
+            formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{rev}}{ILC_{ref}}"
+            
+        elif cas == "A":
+            raisonnement_txt = "Période de Plafonnement Initial (Cas A)."
+            if is_plafonne:
+                nouveau_loyer = loyer_actuel * (ilc_n1 / ilc_ref) * 1.035
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{N-1}}{ILC_{ref}} \times 1,035"
+            else:
+                nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{rev}}{ILC_{ref}}"
 
-    elif cas == "B":
-        lignes_calcul += row_html("Loyer de Base", f"{loyer_actuel:,.2f} €")
-        if is_plafonne:
-            nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * (1.035**2)
-            lignes_calcul += row_html("Variation Historique (N-2)", f"x {ilc_n2/ilc_ref:.5f}")
-            lignes_calcul += row_html("Double Plafonnement", "x 1.0712 (+7.12%)", True)
-        else:
-            nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * 1.035 * (ilc_rev / ilc_n1)
-            lignes_calcul += row_html("Variation N-2", f"x {ilc_n2/ilc_ref:.5f}")
-            lignes_calcul += row_html("Coeff 2023", "x 1.035")
-            lignes_calcul += row_html("Variation N", f"x {ilc_rev/ilc_n1:.5f}")
+        elif cas == "B":
+            raisonnement_txt = "Période de Plafonnement Intermédiaire (Cas B)."
+            if is_plafonne:
+                nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * (1.035**2)
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{N-2}}{ILC_{ref}} \times (1 + 3,5\%)^2"
+            else:
+                nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * 1.035 * (ilc_rev / ilc_n1)
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{N-2}}{ILC_{ref}} \times 1,035 \times \frac{ILC_{rev}}{ILC_{N-1}}"
 
-    elif cas == "C":
-        lignes_calcul += row_html("Loyer de Base", f"{loyer_actuel:,.2f} €")
-        if is_plafonne:
-            nouveau_loyer = loyer_actuel * (1.035**2) * (ilc_rev / ilc_n1)
-            lignes_calcul += row_html("Double Plafonnement", "x 1.0712 (+7.12%)", True)
-            lignes_calcul += row_html("Variation Récente (N/N-1)", f"x {ilc_rev/ilc_n1:.5f}")
-        else:
-            nouveau_loyer = loyer_actuel * 1.035 * (ilc_rev / ilc_n2)
-            lignes_calcul += row_html("Coeff 2023", "x 1.035")
-            lignes_calcul += row_html("Variation Récente (N/N-2)", f"x {ilc_rev/ilc_n2:.5f}")
+        elif cas == "C":
+            raisonnement_txt = "Période Post-Plafonnement (Cas C)."
+            if is_plafonne:
+                nouveau_loyer = loyer_actuel * (1.035**2) * (ilc_rev / ilc_n1)
+                formule_latex = r"L_{révisé} = L_{actuel} \times (1 + 3,5\%)^2 \times \frac{ILC_{rev}}{ILC_{N-1}}"
+            else:
+                nouveau_loyer = loyer_actuel * 1.035 * (ilc_rev / ilc_n2)
+                formule_latex = r"L_{révisé} = L_{actuel} \times 1,035 \times \frac{ILC_{rev}}{ILC_{N-2}}"
 
-    evolution = ((nouveau_loyer/loyer_actuel)-1)*100
-    date_jour = datetime.date.today().strftime('%d/%m/%Y')
-    
-    # Statut
-    statut_icon = "⚠️ PLAFONNÉ" if is_plafonne and cas != 'D' else "✅ NON PLAFONNÉ"
-    statut_color = "#e67e22" if is_plafonne and cas != 'D' else "#27ae60"
+        # --- AFFICHAGE STABLE ---
+        
+        # Bloc 1 : Indices
+        with st.container(border=True):
+            st.subheader("2. Indices Retenus")
+            k1, k2, k3, k4 = st.columns(4)
+            k1.metric("Ref (N-3)", ilc_ref, delta=trimestre_ref_auto, delta_color="off")
+            k2.metric("N-2", ilc_n2 if ilc_n2 else "-")
+            k3.metric("N-1", ilc_n1 if ilc_n1 else "-")
+            k4.metric("Rev (N)", ilc_rev, delta=trimestre_rev, delta_color="off")
 
-    # ==========================================================================
-    # 6. GÉNÉRATION DU RAPPORT HTML (CONCATÉNATION PROPRE)
-    # ==========================================================================
-    # On construit le HTML morceau par morceau pour éviter les bugs d'affichage
-    
-    html = f"""
-    <div class="report-container">
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #1a1a1a; padding-bottom:20px;">
-            <div>
-                <h1 class="brand">ComptaxSolutions</h1>
-                <div class="tagline">Expertise Fiscale & Digitale</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:11px; color:#666;">CERTIFICAT DE RÉVISION</div>
-                <div style="font-size:14px; font-weight:bold;">{date_jour}</div>
-            </div>
-        </div>
+        # Bloc 2 : Résultat
+        with st.container(border=True):
+            st.subheader("3. Résultat Final")
+            cr1, cr2 = st.columns([2, 1])
+            with cr1:
+                if is_plafonne and cas != "D":
+                    st.markdown(f'<div class="badge-warning">⚠️ PLAFONNEMENT ACTIVÉ (>3.5%)</div>', unsafe_allow_html=True)
+                elif cas != "D":
+                    st.markdown(f'<div class="badge-success">✅ SOUS LE PLAFOND (<3.5%)</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="badge-info">⚖️ DROIT COMMUN</div>', unsafe_allow_html=True)
+            with cr2:
+                st.metric("Nouveau Loyer", f"{nouveau_loyer:,.2f} €")
+        
+        # --- BLOC 3 : LE DÉTAIL JURIDIQUE (ACCORDÉON) ---
+        with st.expander("🔎 VOIR LE DÉTAIL EXACT & LE RAISONNEMENT JURIDIQUE", expanded=False):
+            
+            st.markdown("### 1. Qualification de la période")
+            st.info(f"**{raisonnement_txt}**")
+            st.write(f"La révision intervenant au **{trimestre_rev}**, elle relève des règles spécifiques définies par la Loi portant mesures d'urgence pour la protection du pouvoir d'achat.")
 
-        <h2 class="section">1. Contexte Juridique</h2>
-        <div style="font-size:14px; line-height:1.6;">
-            Révision triennale indexée sur l'ILC du <b>{trimestre_rev}</b>.<br>
-            Régime applicable : <b>{regime_nom}</b><br>
-            <span style="display:inline-block; margin-top:5px; padding:5px 10px; background-color:{statut_color}; color:white; font-size:11px; border-radius:3px; font-weight:bold;">
-                {statut_icon}
-            </span>
-        </div>
+            st.markdown("### 2. Test du Glissement Annuel")
+            st.write(f"Le mécanisme compare l'évolution de l'indice sur la période pertinente {txt_glissement} au seuil de 3,5%.")
+            
+            col_test1, col_test2 = st.columns(2)
+            col_test1.metric("Glissement Constaté", f"{glissement:.2%}")
+            col_test2.metric("Seuil Légal", "3.50%")
+            
+            if is_plafonne and cas != "D":
+                st.warning("👉 Le glissement est supérieur à 3,5%. La formule de plafonnement s'applique.")
+            elif cas != "D":
+                st.success("👉 Le glissement est inférieur à 3,5%. Le plafonnement ne s'applique pas.")
 
-        <h2 class="section">2. Indices de Référence</h2>
-        <div class="indices-grid">
-            <div class="index-box">
-                <div class="index-val">{ilc_ref}</div>
-                <div class="index-lbl">RÉF ({trimestre_ref})</div>
-            </div>
-            <div class="index-box" style="background-color:#f9f9f9; color:#aaa;">
-                <div class="index-val">{ilc_n2 if ilc_n2 else '-'}</div>
-                <div class="index-lbl">N-2</div>
-            </div>
-            <div class="index-box" style="background-color:#f9f9f9; color:#aaa;">
-                <div class="index-val">{ilc_n1 if ilc_n1 else '-'}</div>
-                <div class="index-lbl">N-1</div>
-            </div>
-            <div class="index-box" style="border-color:#1a1a1a;">
-                <div class="index-val">{ilc_rev}</div>
-                <div class="index-lbl" style="color:#1a1a1a; font-weight:bold;">RÉVISION ({trimestre_rev})</div>
-            </div>
-        </div>
-
-        <h2 class="section">3. Décomposition</h2>
-        <div style="margin-top:20px;">
-            {lignes_calcul}
-        </div>
-
-        <div class="result-box">
-            <div style="font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#666; margin-bottom:10px;">Nouveau Loyer Annuel</div>
-            <div class="result-amount">{nouveau_loyer:,.2f} €</div>
-            <div style="font-size:13px; margin-top:15px; color:#666;">
-                Évolution : <b>{evolution:+.2f}%</b>
-            </div>
-        </div>
-
-        <div style="text-align:center; font-size:10px; color:#999; margin-top:60px;">
-            Document généré automatiquement par l'algorithme ComptaxSolutions.<br>
-            La validité juridique dépend de l'exactitude des indices saisis.
-        </div>
-    </div>
-    """
-
-    # Affichage final avec interpretation HTML forcée
-    st.markdown(html, unsafe_allow_html=True)
-
-else:
-    # État vide (attente de saisie)
-    st.info("Veuillez sélectionner un trimestre valide dans la barre latérale pour générer le rapport.")
+            st.markdown("### 3. Application Mathématique")
+            st.write("La formule applicable est la suivante :")
+            st.latex(formule_latex)
+            
+            st.write("**Détail numérique :**")
+            # Affichage "Brut" pour vérification
+            st.code(f"""
+            Loyer Actuel : {loyer_actuel}
+            Indice Ref (N-3) : {ilc_ref}
+            Indice N-2 : {ilc_n2}
+            Indice N-1 : {ilc_n1}
+            Indice Rev (N) : {ilc_rev}
+            
+            Résultat calculé : {nouveau_loyer}
+            """)
