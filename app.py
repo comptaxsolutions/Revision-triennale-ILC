@@ -4,39 +4,33 @@ import pandas as pd
 # ==============================================================================
 # 1. CONFIGURATION
 # ==============================================================================
-st.set_page_config(page_title="Révision ILC Pro", page_icon="🏢", layout="wide")
+st.set_page_config(page_title="Révision ILC Expert", page_icon="⚖️", layout="wide")
 
-# CSS : On garde juste le "Maquillage" (Couleurs), on enlève la "Structure" (Divs)
 st.markdown("""
     <style>
-    /* Fond général */
     .stApp { background-color: #F8F9FA; }
-    
-    /* Titres */
     h1 { color: #2C3E50; }
-    h3 { color: #2E86C1; font-size: 1.2rem !important; }
-    
-    /* Métriques */
-    div[data-testid="stMetricValue"] {
-        font-size: 1.5rem;
-        color: #2E4053;
+    /* Style spécifique pour l'expander (le détail) */
+    .streamlit-expanderHeader {
+        font-weight: bold;
+        color: #2E86C1;
+        background-color: white;
+        border-radius: 5px;
     }
-    
-    /* Badges (Alertes) */
     .badge-warning {
         background-color: #FEF9E7; color: #D35400; 
         padding: 5px 10px; border-radius: 4px; border: 1px solid #F5B041; 
-        font-weight: bold; display: inline-block; margin-bottom: 10px;
+        font-weight: bold;
     }
     .badge-success {
         background-color: #EAFAF1; color: #27AE60; 
         padding: 5px 10px; border-radius: 4px; border: 1px solid #ABEBC6; 
-        font-weight: bold; display: inline-block; margin-bottom: 10px;
+        font-weight: bold;
     }
     .badge-info {
         background-color: #EBF5FB; color: #2980B9;
         padding: 5px 10px; border-radius: 4px; border: 1px solid #AED6F1;
-        font-weight: bold; display: inline-block; margin-bottom: 10px;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -47,86 +41,71 @@ st.markdown("""
 @st.cache_data
 def load_data():
     try:
-        # Lecture du fichier Excel
         df = pd.read_excel("indices_ilc.xlsx")
         df.columns = ["Trimestre", "Indice"]
         df['Trimestre'] = df['Trimestre'].astype(str).str.strip()
         return df
     except Exception as e:
-        # En cas d'erreur locale ou fichier manquant
         st.error(f"Erreur Excel : {e}")
-        return pd.DataFrame() # Retourne vide pour ne pas crasher
+        return pd.DataFrame()
 
 df_indices = load_data()
 
-# --- Fonctions Utilitaires ---
 def get_indice_value(trimestre_str):
     if df_indices.empty: return None
     row = df_indices[df_indices["Trimestre"] == trimestre_str]
-    if not row.empty:
-        return row.iloc[0]["Indice"]
+    if not row.empty: return row.iloc[0]["Indice"]
     return None
 
 def get_offset_trimestre(trimestre, years_back=0):
-    """Calcule automatiquement T - 3 ans"""
     try:
         parts = trimestre.split("-T")
         year = int(parts[0])
         quarter = int(parts[1])
-        
-        # On recule de X années
         new_year = year - years_back
         return f"{new_year}-T{quarter}"
-    except:
-        return None
+    except: return None
 
 # ==============================================================================
-# 3. INTERFACE (Layout Natif)
+# 3. INTERFACE
 # ==============================================================================
 
-st.title("🏢 Simulateur de Révision ILC")
-st.caption("Conforme Loi Pouvoir d'Achat (Plafonnement & Droit Commun)")
+st.title("⚖️ Simulateur de Révision ILC")
+st.caption("Conforme Loi Pouvoir d'Achat (Plafonnement) & Droit Commun")
 
 if df_indices.empty:
-    st.warning("⚠️ Veuillez charger le fichier 'indices_ilc.xlsx' dans le dossier.")
+    st.warning("⚠️ Veuillez charger le fichier 'indices_ilc.xlsx'.")
     st.stop()
 
 col_left, col_right = st.columns([1, 2], gap="large")
 
 # --- COLONNE GAUCHE : SAISIE ---
 with col_left:
-    # Utilisation du conteneur natif avec bordure (Stable)
     with st.container(border=True):
         st.subheader("1. Paramètres du Bail")
-        
         loyer_actuel = st.number_input("Loyer Annuel Actuel (€)", value=2155.28, step=100.0, format="%.2f")
-        
         st.divider()
         
-        # Sélecteur Triennal (Inversé pour avoir les récents en haut)
         liste_trimestres = df_indices["Trimestre"].tolist()[::-1]
-        trimestre_rev = st.selectbox("📅 Trimestre de la Révision (N)", liste_trimestres)
+        trimestre_rev = st.selectbox("📅 Trimestre de Révision (N)", liste_trimestres)
         
-        # AUTOMATISME 3 ANS (MASTER/SLAVE)
+        # AUTO-LOCK 3 ANS
         trimestre_ref_auto = get_offset_trimestre(trimestre_rev, years_back=3)
-        
-        # Récupération indices
         ilc_rev = get_indice_value(trimestre_rev)
         ilc_ref = get_indice_value(trimestre_ref_auto)
         
         if ilc_ref:
-            st.success(f"📌 Réf auto (-3 ans) : **{trimestre_ref_auto}**")
+            st.success(f"📌 Réf (-3 ans) : **{trimestre_ref_auto}**")
         else:
-            st.error(f"⚠️ Indice {trimestre_ref_auto} manquant dans l'Excel.")
+            st.error(f"⚠️ Indice {trimestre_ref_auto} manquant.")
 
-# --- COLONNE DROITE : RÉSULTAT ---
+# --- COLONNE DROITE : CALCUL & RAISONNEMENT ---
 with col_right:
     if ilc_rev and ilc_ref:
         
-        # Calcul des dates intermédiaires pour le plafonnement
+        # Calculs indices intermédiaires
         trimestre_n1 = get_offset_trimestre(trimestre_rev, years_back=1)
         trimestre_n2 = get_offset_trimestre(trimestre_rev, years_back=2)
-        
         ilc_n1 = get_indice_value(trimestre_n1)
         ilc_n2 = get_indice_value(trimestre_n2)
         
@@ -138,44 +117,54 @@ with col_right:
         elif 2023.2 <= annee_float <= 2024.1: cas = "B"
         elif 2024.2 <= annee_float <= 2026.1: cas = "C"
         
-        # Calcul glissement
+        # Glissement
         glissement = 0.0
+        txt_glissement = ""
         if cas == "C" and ilc_n1 and ilc_n2:
             glissement = (ilc_n1 / ilc_n2) - 1
+            txt_glissement = "(Indice N-1 / Indice N-2)"
         elif ilc_rev and ilc_n1:
             glissement = (ilc_rev / ilc_n1) - 1
+            txt_glissement = "(Indice N / Indice N-1)"
             
         is_plafonne = glissement >= 0.035
         
         # Calcul Montant
         nouveau_loyer = 0.0
-        explication = ""
+        formule_latex = ""
+        raisonnement_txt = ""
         
-        # Formules
         if cas == "D":
             nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-            explication = f"{loyer_actuel:.2f} x ({ilc_rev} / {ilc_ref})"
+            raisonnement_txt = "Nous sommes hors période de plafonnement. Application du droit commun."
+            formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{rev}}{ILC_{ref}}"
+            
         elif cas == "A":
+            raisonnement_txt = "Période de Plafonnement Initial (Cas A)."
             if is_plafonne:
                 nouveau_loyer = loyer_actuel * (ilc_n1 / ilc_ref) * 1.035
-                explication = f"{loyer_actuel:.2f} x ({ilc_n1} / {ilc_ref}) x 1,035"
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{N-1}}{ILC_{ref}} \times 1,035"
             else:
                 nouveau_loyer = loyer_actuel * (ilc_rev / ilc_ref)
-                explication = f"{loyer_actuel:.2f} x ({ilc_rev} / {ilc_ref})"
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{rev}}{ILC_{ref}}"
+
         elif cas == "B":
+            raisonnement_txt = "Période de Plafonnement Intermédiaire (Cas B)."
             if is_plafonne:
                 nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * (1.035**2)
-                explication = f"{loyer_actuel:.2f} x ({ilc_n2} / {ilc_ref}) x 1,035²"
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{N-2}}{ILC_{ref}} \times (1 + 3,5\%)^2"
             else:
                 nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * 1.035 * (ilc_rev / ilc_n1)
-                explication = "Formule complexe (Non plafonné)"
+                formule_latex = r"L_{révisé} = L_{actuel} \times \frac{ILC_{N-2}}{ILC_{ref}} \times 1,035 \times \frac{ILC_{rev}}{ILC_{N-1}}"
+
         elif cas == "C":
+            raisonnement_txt = "Période Post-Plafonnement (Cas C)."
             if is_plafonne:
                 nouveau_loyer = loyer_actuel * (1.035**2) * (ilc_rev / ilc_n1)
-                explication = f"{loyer_actuel:.2f} x 1,035² x ({ilc_rev} / {ilc_n1})"
+                formule_latex = r"L_{révisé} = L_{actuel} \times (1 + 3,5\%)^2 \times \frac{ILC_{rev}}{ILC_{N-1}}"
             else:
                 nouveau_loyer = loyer_actuel * 1.035 * (ilc_rev / ilc_n2)
-                explication = f"{loyer_actuel:.2f} x 1,035 x ({ilc_rev} / {ilc_n2})"
+                formule_latex = r"L_{révisé} = L_{actuel} \times 1,035 \times \frac{ILC_{rev}}{ILC_{N-2}}"
 
         # --- AFFICHAGE STABLE ---
         
@@ -190,23 +179,49 @@ with col_right:
 
         # Bloc 2 : Résultat
         with st.container(border=True):
-            st.subheader("3. Résultat & Analyse")
-            
+            st.subheader("3. Résultat Final")
             cr1, cr2 = st.columns([2, 1])
-            
             with cr1:
-                # Affichage des Badges via HTML sécurisé (sans structure div complexe)
                 if is_plafonne and cas != "D":
                     st.markdown(f'<div class="badge-warning">⚠️ PLAFONNEMENT ACTIVÉ (>3.5%)</div>', unsafe_allow_html=True)
-                    st.caption(f"Glissement : {glissement:.2%}. Le bouclier loyer s'applique.")
                 elif cas != "D":
                     st.markdown(f'<div class="badge-success">✅ SOUS LE PLAFOND (<3.5%)</div>', unsafe_allow_html=True)
-                    st.caption(f"Glissement : {glissement:.2%}. Application de l'indice réel.")
                 else:
                     st.markdown(f'<div class="badge-info">⚖️ DROIT COMMUN</div>', unsafe_allow_html=True)
-                    st.caption("Hors période de plafonnement.")
-
-                st.write(f"**Formule :** {explication}")
-            
             with cr2:
                 st.metric("Nouveau Loyer", f"{nouveau_loyer:,.2f} €")
+        
+        # --- BLOC 3 : LE DÉTAIL JURIDIQUE (ACCORDÉON) ---
+        with st.expander("🔎 VOIR LE DÉTAIL EXACT & LE RAISONNEMENT JURIDIQUE", expanded=False):
+            
+            st.markdown("### 1. Qualification de la période")
+            st.info(f"**{raisonnement_txt}**")
+            st.write(f"La révision intervenant au **{trimestre_rev}**, elle relève des règles spécifiques définies par la Loi portant mesures d'urgence pour la protection du pouvoir d'achat.")
+
+            st.markdown("### 2. Test du Glissement Annuel")
+            st.write(f"Le mécanisme compare l'évolution de l'indice sur la période pertinente {txt_glissement} au seuil de 3,5%.")
+            
+            col_test1, col_test2 = st.columns(2)
+            col_test1.metric("Glissement Constaté", f"{glissement:.2%}")
+            col_test2.metric("Seuil Légal", "3.50%")
+            
+            if is_plafonne and cas != "D":
+                st.warning("👉 Le glissement est supérieur à 3,5%. La formule de plafonnement s'applique.")
+            elif cas != "D":
+                st.success("👉 Le glissement est inférieur à 3,5%. Le plafonnement ne s'applique pas.")
+
+            st.markdown("### 3. Application Mathématique")
+            st.write("La formule applicable est la suivante :")
+            st.latex(formule_latex)
+            
+            st.write("**Détail numérique :**")
+            # Affichage "Brut" pour vérification
+            st.code(f"""
+            Loyer Actuel : {loyer_actuel}
+            Indice Ref (N-3) : {ilc_ref}
+            Indice N-2 : {ilc_n2}
+            Indice N-1 : {ilc_n1}
+            Indice Rev (N) : {ilc_rev}
+            
+            Résultat calculé : {nouveau_loyer}
+            """)
