@@ -6,7 +6,7 @@ import datetime
 # 1. CONFIGURATION DU "COCKPIT"
 # ==============================================================================
 st.set_page_config(
-    page_title="Lease Valuation | Premium Edition",
+    page_title="Lease Valuation | ComptaxSolutions",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -25,7 +25,21 @@ st.markdown("""
         --gold: #b4975a;      /* Or brossé - Luxe discret */
         --paper: #ffffff;     /* Blanc pur */
         --bg: #f1f5f9;        /* Gris très léger pour le fond */
-        --subtle: #94a3b8;    /* Gris texte secondaire */
+        --subtle: #64748b;    /* Gris texte secondaire */
+    }
+
+    /* --- CORRECTION DU "GROS ENCADRÉ VIDE" --- */
+    /* On supprime les marges par défaut de Streamlit */
+    .block-container {
+        padding-top: 2rem !important; /* Juste un petit espace pour respirer */
+        padding-bottom: 0rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+    
+    /* On cache le Header par défaut de Streamlit qui prend de la place */
+    header[data-testid="stHeader"] {
+        display: none;
     }
 
     /* STRUCTURE GÉNÉRALE */
@@ -34,18 +48,17 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
     
-    /* MASQUER LES ÉLÉMENTS STREAMLIT PAR DÉFAUT */
-    #MainMenu, footer, header {visibility: hidden;}
+    #MainMenu, footer {visibility: hidden;}
 
     /* LA FEUILLE A4 (CONTAINER PRINCIPAL) */
     .report-sheet {
         background-color: var(--paper);
         max-width: 21cm; /* Largeur A4 */
-        margin: 0 auto;
-        padding: 40px 60px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+        margin: 0 auto; /* Centré */
+        padding: 50px 60px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
         border-top: 5px solid var(--primary);
-        min-height: 29.7cm; /* Hauteur A4 min */
+        min-height: 25cm;
     }
 
     /* TYPOGRAPHIE */
@@ -55,77 +68,85 @@ st.markdown("""
     }
     
     .report-title {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 700;
         letter-spacing: -0.5px;
         margin-bottom: 5px;
+        color: var(--primary);
     }
     
     .report-subtitle {
-        font-size: 12px;
+        font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 2px;
         color: var(--gold);
         font-weight: 600;
+        margin-bottom: 10px;
     }
 
     /* CARTES KPI (LES INDICES) */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
+        gap: 0; /* Collé pour faire "Tableau" */
         margin: 30px 0;
-        padding: 20px;
-        background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 4px;
+        border-radius: 6px;
+        overflow: hidden;
     }
     
     .kpi-item {
         text-align: center;
+        padding: 15px 5px;
+        background: #f8fafc;
+        border-right: 1px solid #e2e8f0;
     }
+    .kpi-item:last-child { border-right: none; background: #fff; }
     
     .kpi-val {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 600;
         color: var(--primary);
         font-family: 'Inter', sans-serif;
     }
     
     .kpi-label {
-        font-size: 10px;
+        font-size: 9px;
         text-transform: uppercase;
         color: var(--subtle);
         margin-top: 5px;
+        letter-spacing: 0.5px;
     }
 
     /* LE RÉSULTAT FINAL (HERO) */
     .result-hero {
         text-align: center;
         padding: 40px 0;
-        margin: 30px 0;
+        margin: 20px 0;
+        background: linear-gradient(to bottom, #ffffff, #f8fafc);
         border-top: 1px solid #e2e8f0;
         border-bottom: 1px solid #e2e8f0;
     }
     
     .result-amount {
-        font-size: 56px;
+        font-size: 52px;
         font-family: 'Playfair Display', serif;
         font-weight: 700;
         color: var(--primary);
     }
     
     .result-caption {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--subtle);
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
+        margin-bottom: 10px;
     }
 
     /* BADGES STATUT */
     .status-badge {
         display: inline-block;
-        padding: 4px 12px;
+        padding: 5px 15px;
         border-radius: 50px;
         font-size: 11px;
         font-weight: 600;
@@ -138,7 +159,7 @@ st.markdown("""
     /* L'ACCORDÉON (EXPANDER) */
     .streamlit-expanderHeader {
         font-family: 'Inter', sans-serif;
-        font-size: 14px;
+        font-size: 13px;
         color: var(--subtle);
         background-color: transparent;
         border: none;
@@ -148,9 +169,10 @@ st.markdown("""
     @media print {
         .stApp { background: white; }
         section[data-testid="stSidebar"] { display: none; }
-        .report-sheet { box-shadow: none; margin: 0; border-top: none; }
+        .block-container { padding: 0 !important; }
+        .report-sheet { box-shadow: none; margin: 0; border-top: none; width: 100%; max-width: 100%; }
         .streamlit-expanderHeader { display: none; } /* On cache le bouton */
-        .streamlit-expanderContent { display: block !important; height: auto !important; opacity: 1 !important; visibility: visible !important; } /* On force le contenu à s'afficher */
+        .streamlit-expanderContent { display: block !important; height: auto !important; opacity: 1 !important; visibility: visible !important; } 
     }
     </style>
     """, unsafe_allow_html=True)
@@ -184,7 +206,7 @@ def get_offset(t, years_back=0):
 # 4. SIDEBAR (PANNEAU DE CONTRÔLE)
 # ==============================================================================
 with st.sidebar:
-    st.markdown("### ⚙️ Paramètres du Bail")
+    st.markdown("### ⚙️ Paramètres")
     
     loyer_actuel = st.number_input(
         "Loyer Annuel Actuel (€)", 
@@ -205,17 +227,21 @@ with st.sidebar:
         ilc_ref = get_indice(trimestre_ref)
         ilc_n1 = get_indice(trimestre_n1)
         ilc_n2 = get_indice(trimestre_n2)
-
-        st.success(f"🔗 Réf. Automatique (N-3) : **{trimestre_ref}**")
+        
+        if ilc_ref:
+            st.success(f"🔗 Réf. Automatique (N-3) : **{trimestre_ref}**")
+        else:
+            st.warning("Données incomplètes pour calculer.")
+            
     else:
         st.error("Base de données manquante.")
         st.stop()
 
     st.markdown("---")
-    st.caption("Pour imprimer le rapport officiel : `CTRL + P`")
+    st.caption("Impression PDF : `CTRL + P`")
 
 # ==============================================================================
-# 5. LOGIQUE JURIDIQUE (LE CERVEAU)
+# 5. LOGIQUE JURIDIQUE
 # ==============================================================================
 if ilc_rev and ilc_ref:
     # 1. Qualification Période
@@ -269,7 +295,7 @@ if ilc_rev and ilc_ref:
             formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-2}}{ILC_{ref}} \times (1,035)^2"
         else:
             nouveau_loyer = loyer_actuel * (ilc_n2 / ilc_ref) * 1.035 * (ilc_rev / ilc_n1)
-            badge_html = '<span class="status-badge status-success">COMPLEXE (NON PLAFONNÉ)</span>'
+            badge_html = '<span class="status-badge status-success">COMPLEXE</span>'
             formule_tex = r"L_{rev} = L_{act} \times \frac{ILC_{N-2}}{ILC_{ref}} \times 1,035 \times \frac{ILC_{N}}{ILC_{N-1}}"
 
     elif cas == "C":
@@ -292,14 +318,14 @@ if ilc_rev and ilc_ref:
     # --- HEADER ---
     c1, c2 = st.columns([2, 1])
     with c1:
-        st.markdown('<div class="report-subtitle">RAPPORT D\'EXPERTISE</div>', unsafe_allow_html=True)
-        st.markdown('<div class="report-title">Révision Triennale ILC</div>', unsafe_allow_html=True)
-        st.markdown(f'<div style="color:#64748B; font-size:14px;">Révision au titre du <b>{trimestre_rev}</b></div>', unsafe_allow_html=True)
+        st.markdown('<div class="report-subtitle">CERTIFICAT D\'EXPERTISE</div>', unsafe_allow_html=True)
+        st.markdown('<div class="report-title">Révision ILC</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="color:#64748B; font-size:14px; margin-top:5px;">Période : <b>{trimestre_ref}</b> → <b>{trimestre_rev}</b></div>', unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
         <div style="text-align:right;">
-            <div style="font-weight:bold; font-size:14px; color:#1e293b;">DATE D'ÉDITION</div>
-            <div style="font-family:'Playfair Display'; font-size:18px;">{datetime.date.today().strftime('%d.%m.%Y')}</div>
+            <div style="font-weight:bold; font-size:12px; color:#1e293b; letter-spacing:1px;">DATE D'ÉDITION</div>
+            <div style="font-family:'Playfair Display'; font-size:16px;">{datetime.date.today().strftime('%d/%m/%Y')}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -310,7 +336,7 @@ if ilc_rev and ilc_ref:
     <div class="kpi-grid">
         <div class="kpi-item">
             <div class="kpi-val">{ilc_ref}</div>
-            <div class="kpi-label">RÉFÉRENCE<br>({trimestre_ref})</div>
+            <div class="kpi-label">RÉFÉRENCE<br>(N-3)</div>
         </div>
         <div class="kpi-item">
             <div class="kpi-val">{ilc_n2 if ilc_n2 else '-'}</div>
@@ -320,9 +346,9 @@ if ilc_rev and ilc_ref:
             <div class="kpi-val">{ilc_n1 if ilc_n1 else '-'}</div>
             <div class="kpi-label">INDICE<br>N-1</div>
         </div>
-        <div class="kpi-item" style="border-left:1px solid #e2e8f0;">
+        <div class="kpi-item">
             <div class="kpi-val" style="color:#b4975a;">{ilc_rev}</div>
-            <div class="kpi-label" style="color:#b4975a;">RÉVISION<br>({trimestre_rev})</div>
+            <div class="kpi-label" style="color:#b4975a;">RÉVISION<br>(N)</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -332,42 +358,41 @@ if ilc_rev and ilc_ref:
     <div class="result-hero">
         <div class="result-caption">NOUVEAU LOYER ANNUEL (H.T. H.C.)</div>
         <div class="result-amount">{nouveau_loyer:,.2f} €</div>
-        <div style="margin-top:10px;">{badge_html}</div>
+        <div style="margin-top:15px;">{badge_html}</div>
     </div>
     """, unsafe_allow_html=True)
 
     # --- AUDIT TRAIL (LE DÉTAIL DEROULANT) ---
-    st.markdown("---")
-    with st.expander("🔎 AUDITER LE CALCUL & LA FORMULE (CLIQUER POUR DÉROULER)", expanded=False):
-        
+    with st.expander("🔎 DÉTAIL JURIDIQUE & FORMULE (CLIQUER)", expanded=False):
+        st.markdown("---")
         ec1, ec2 = st.columns(2)
         
         with ec1:
-            st.markdown("#### 1. Qualification Juridique")
+            st.markdown("#### 1. Analyse")
             st.markdown(f"""
             * **Régime :** {regime_label}
             * **Glissement pertinent ({ref_gliss_txt}) :** {glissement:.2%}
-            * **Seuil Légal :** 3.50%
             """)
             if is_plafonne and cas != "D":
-                st.warning("Le glissement dépasse 3.5%. Le mécanisme de plafonnement s'active pour protéger le locataire.")
+                st.caption("⚠️ Le glissement dépasse 3.5%, activant le bouclier loyer.")
             else:
-                st.info("Le glissement est conforme ou le régime ne prévoit pas de plafonnement.")
+                st.caption("✅ Le glissement est inférieur au seuil de plafonnement.")
 
         with ec2:
-            st.markdown("#### 2. Formule Mathématique")
+            st.markdown("#### 2. Preuve Mathématique")
             st.latex(formule_tex)
-            st.markdown("**Vérification Numérique :**")
-            st.code(f"Calcul = {nouveau_loyer:.4f} €")
+            st.caption(f"Calcul vérifié : {nouveau_loyer:.4f} €")
 
-    # --- FOOTER ---
+    # --- FOOTER AVEC BRANDING ---
     st.markdown("""
-    <div style="text-align:center; margin-top:40px; font-size:10px; color:#cbd5e1;">
-        DOCUMENT GÉNÉRÉ PAR TAX-TECH SOLUTIONS • STRICTEMENT CONFIDENTIEL
+    <div style="text-align:center; margin-top:60px; padding-top:20px; border-top:1px solid #f1f5f9;">
+        <p style="font-size:10px; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">
+            Création de ComptaxSolutions
+        </p>
     </div>
     </div>
     """, unsafe_allow_html=True)
 
 else:
-    # --- ECRAN D'ACCUEIL (SI PAS DE DONNEES) ---
-    st.info("Veuillez configurer les paramètres dans le panneau latéral pour générer le rapport.")
+    # ECRAN D'ACCUEIL VIDE MAIS PROPRE
+    st.write("")
